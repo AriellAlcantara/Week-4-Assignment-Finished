@@ -1,45 +1,55 @@
 using UnityEngine;
+using System.Linq;
 
 public class Turret : MonoBehaviour
 {
-    public Transform player;
     public GameObject projectilePrefab;
     public Transform firePoint;
     public float range = 5f;
-    public float firingAngleThreshold = 10f;
     public float cooldown = 2f;
     public float projectileSpeed = 5f;
+    public float rotationSpeed = 5f; // Adjust for smooth rotation
+
     private float lastFireTime = 0f;
+    private Transform currentTarget;
 
     void Update()
     {
-        if (player == null) return;
+        currentTarget = FindClosestEnemy();
 
-        Vector2 directionToPlayer = player.position - transform.position;
-        float distanceToPlayer = directionToPlayer.magnitude;
-
-        RotateTowardsPlayer(directionToPlayer);
-
-        if (distanceToPlayer <= range)
+        if (currentTarget != null)
         {
-            float angleToPlayer = Vector2.Angle(transform.right, directionToPlayer.normalized);
-            if (angleToPlayer <= firingAngleThreshold && Time.time >= lastFireTime + cooldown)
+            RotateTowardsTarget(currentTarget.position);
+
+            if (Time.time >= lastFireTime + cooldown)
             {
-                FireProjectile(directionToPlayer.normalized);
+                FireProjectile(currentTarget.position);
                 lastFireTime = Time.time;
             }
         }
     }
 
-    private void RotateTowardsPlayer(Vector2 direction)
+    Transform FindClosestEnemy()
     {
-        float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
-        transform.rotation = Quaternion.Euler(0f, 0f, angle);
+        GameObject[] enemies = GameObject.FindGameObjectsWithTag("Enemy");
+        return enemies
+            .Where(e => Vector3.Distance(transform.position, e.transform.position) <= range)
+            .OrderBy(e => Vector3.Distance(transform.position, e.transform.position))
+            .Select(e => e.transform)
+            .FirstOrDefault();
     }
 
-    private void FireProjectile(Vector3 direction)
+    void RotateTowardsTarget(Vector3 targetPosition)
+    {
+        Vector3 direction = targetPosition - transform.position;
+        float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+        Quaternion targetRotation = Quaternion.Euler(0, 0, angle);
+        transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * rotationSpeed);
+    }
+
+    void FireProjectile(Vector3 targetPosition)
     {
         GameObject projectile = Instantiate(projectilePrefab, firePoint.position, Quaternion.identity);
-        projectile.GetComponent<Projectile>().SetDirection(direction);
+        projectile.GetComponent<Projectile>().SetDirection((targetPosition - firePoint.position).normalized);
     }
 }

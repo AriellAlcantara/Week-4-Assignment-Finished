@@ -3,9 +3,23 @@ using TMPro;
 
 public class GameManager : MonoBehaviour
 {
+    public static GameManager Instance { get; private set; }
+
     public TextMeshProUGUI hpText;
     public int playerHP = 10;
     public int gold = 0;
+
+    private void Awake()
+    {
+        if (Instance == null)
+        {
+            Instance = this;
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
+    }
 
     public void AddGold(int amount)
     {
@@ -31,7 +45,10 @@ public class GameManager : MonoBehaviour
 
     private void UpdateHPUI()
     {
-        hpText.text = "HP: " + playerHP;
+        if (hpText != null)
+        {
+            hpText.text = "HP: " + playerHP;
+        }
     }
 
     private void ShowGameOverScreen()

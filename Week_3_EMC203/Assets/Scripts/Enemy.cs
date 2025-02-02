@@ -2,26 +2,48 @@ using UnityEngine;
 
 public class Enemy : MonoBehaviour
 {
-    public Transform startLocation;
-    public Transform endLocation;
-    public float speed = 2f;
-    public bool useCubicMovement;
+    public Transform target;
+    public float moveSpeed = 2f;
+    public bool useCubic = false;
 
-    private float progress = 0f;
+    private float t = 0f;
+    private Vector3 startPos;
+
+    void Start()
+    {
+        // Find the GameObject named "TargetPoint" and assign its transform to target
+        target = GameObject.Find("TargetPoint").transform;
+
+        // If you want to make sure the target is valid
+        if (target == null)
+        {
+            Debug.LogError("TargetPoint GameObject not found!");
+        }
+
+        startPos = transform.position;
+    }
 
     void Update()
     {
-        progress += speed * Time.deltaTime;
-        float t = useCubicMovement ? EaseOutCubic(progress) : EaseOutQuadratic(progress);
-        transform.position = Vector3.Lerp(startLocation.position, endLocation.position, t);
+        if (target == null) return;
 
-        if (progress >= 1f)
+        t += Time.deltaTime * moveSpeed;
+        transform.position = useCubic ? CubicLerp(startPos, target.position, t) : QuadraticLerp(startPos, target.position, t);
+
+        if (t >= 1f)
         {
-            FindFirstObjectByType<GameManager>()?.DecreaseHP();
+            GameManager.Instance.DecreaseHP();
             Destroy(gameObject);
         }
     }
 
-    float EaseOutQuadratic(float x) => 1 - (1 - x) * (1 - x);
-    float EaseOutCubic(float x) => 1 - Mathf.Pow(1 - x, 3);
+    Vector3 QuadraticLerp(Vector3 start, Vector3 end, float t)
+    {
+        return Vector3.Lerp(start, end, t * t);
+    }
+
+    Vector3 CubicLerp(Vector3 start, Vector3 end, float t)
+    {
+        return Vector3.Lerp(start, end, t * t * t);
+    }
 }
