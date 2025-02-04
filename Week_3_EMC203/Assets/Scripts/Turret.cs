@@ -3,15 +3,17 @@ using System.Linq;
 
 public class Turret : MonoBehaviour
 {
-    public GameObject projectilePrefab;
+    public GameObject projectilePrefab; // Normal projectile
+    public GameObject homingMissilePrefab; // Homing missile
     public Transform firePoint;
     public float range = 5f;
     public float cooldown = 2f;
     public float projectileSpeed = 5f;
-    public float rotationSpeed = 5f; // Adjust for smooth rotation
+    public float rotationSpeed = 5f;
 
     private float lastFireTime = 0f;
     private Transform currentTarget;
+    private int shotCount = 0; // Counts shots before firing a homing missile
 
     void Update()
     {
@@ -23,7 +25,17 @@ public class Turret : MonoBehaviour
 
             if (Time.time >= lastFireTime + cooldown)
             {
-                FireProjectile(currentTarget.position);
+                shotCount++;
+
+                if (shotCount % 3 == 0) // Every 3rd shot is a homing missile
+                {
+                    FireHomingMissile(currentTarget);
+                }
+                else
+                {
+                    FireProjectile(currentTarget);
+                }
+
                 lastFireTime = Time.time;
             }
         }
@@ -47,9 +59,15 @@ public class Turret : MonoBehaviour
         transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, Time.deltaTime * rotationSpeed);
     }
 
-    void FireProjectile(Vector3 targetPosition)
+    void FireProjectile(Transform target)
     {
         GameObject projectile = Instantiate(projectilePrefab, firePoint.position, Quaternion.identity);
-        projectile.GetComponent<Projectile>().SetDirection((targetPosition - firePoint.position).normalized);
+        projectile.GetComponent<Projectile>().SetDirection((target.position - firePoint.position).normalized);
+    }
+
+    void FireHomingMissile(Transform target)
+    {
+        GameObject missile = Instantiate(homingMissilePrefab, firePoint.position, Quaternion.identity);
+        missile.GetComponent<HomingMissile>().SetTarget(target);
     }
 }

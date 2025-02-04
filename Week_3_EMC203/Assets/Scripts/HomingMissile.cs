@@ -6,14 +6,13 @@ public class HomingMissile : MonoBehaviour
     public float rotateSpeed = 200f;
     private Transform target;
 
-    void Start()
-    {
-        target = FindClosestEnemy();
-    }
-
     void Update()
     {
-        if (target == null) return;
+        if (target == null)
+        {
+            target = FindNewTarget(); // Find a new target if the current one is destroyed
+            if (target == null) return; // If no targets remain, missile stops moving
+        }
 
         Vector2 direction = (target.position - transform.position).normalized;
         float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
@@ -22,7 +21,12 @@ public class HomingMissile : MonoBehaviour
         transform.position += transform.right * speed * Time.deltaTime;
     }
 
-    Transform FindClosestEnemy()
+    public void SetTarget(Transform newTarget)
+    {
+        target = newTarget; // Assigns the target from the turret
+    }
+
+    Transform FindNewTarget()
     {
         GameObject[] enemies = GameObject.FindGameObjectsWithTag("Enemy");
         Transform closest = null;
@@ -47,6 +51,11 @@ public class HomingMissile : MonoBehaviour
             Destroy(other.gameObject);
             Destroy(gameObject);
             FindFirstObjectByType<GameManager>().AddGold(5);
+            target = FindNewTarget(); // Get a new target if available
+            if (target == null)
+            {
+                Destroy(gameObject); // Destroy missile if no targets are left
+            }
         }
     }
 }
