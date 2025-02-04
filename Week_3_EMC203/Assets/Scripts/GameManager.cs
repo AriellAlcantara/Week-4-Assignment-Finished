@@ -9,6 +9,7 @@ public class GameManager : MonoBehaviour
     public TextMeshProUGUI goldText;
     public TextMeshProUGUI notEnoughGoldText; // New text for "Not enough gold" warning
     public GameObject failUI;
+    public TextMeshProUGUI failText;
     public int playerHP = 10;
     public int gold = 0;
 
@@ -77,6 +78,7 @@ public class GameManager : MonoBehaviour
         {
             ShowGameOverScreen();
             failUI.SetActive(true);
+            failText.gameObject.SetActive(true);
         }
     }
 
